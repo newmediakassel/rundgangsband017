@@ -11,9 +11,13 @@ const ableton = new Ableton()
 }*/
 
 //const crossfaderSubscription = ableton.subscribeTo('track/select', onCrossfadeChange)
-ableton.set('master/crossfader', Math.random())
+//ableton.set('play/scene', 4)
+const group = 1
+// group,
+//ableton.set('clip/play', 1, 5)
+//ableton.set('master/crossfader', Math.random())
 
-/*
+
 const indexHandler = IndexHandler({
     templatePath: __dirname + '/templates'
 })
@@ -28,10 +32,11 @@ io.on('connection', (socket) => {
     socket.emit('news', { hello: 'world' })
 
     socket.on('pingServer', (data)  => {
-        console.log(data)
-        counter++
-        socket.emit('news', 'bar' + counter)
+        console.log('got data from the interface', data)
+        ableton.set('clip/play', parseInt(data[0]) || 0, parseInt(data[1]) || 0)
+        //counter++
+        //socket.emit('news', 'bar' + counter)
     })
 })
 
-app.listen(3000)*/
+app.listen(3000)

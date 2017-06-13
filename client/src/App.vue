@@ -4,6 +4,9 @@
 
     <p>Message from server: "{{socketMessage}}"</p>
 
+    <input type="number" v-model="slot1" v-on:blur="pingServer()" placeholder="track">
+    <input type="number" v-model="slot2" v-on:blur="pingServer()" placeholder="slot">
+    
     <button @click="pingServer()">Ping Server</button>
   </div>
 </template>
@@ -12,7 +15,9 @@
 export default {
     data: () => ({
         isConnected: false,
-        socketMessage: ''
+        socketMessage: '',
+        slot1: 0,
+        slot2: 0
     }),
 
     sockets: {
@@ -34,7 +39,8 @@ export default {
     methods: {
         pingServer() {
             // Send the "pingServer" event to the server.
-            this.$socket.emit('pingServer', 'PING!')
+            console.log(this.slot1, this.slot2)
+            this.$socket.emit('pingServer', [this.slot1, this.slot2])
         }
     }
 }

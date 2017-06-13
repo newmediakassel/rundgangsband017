@@ -18,15 +18,20 @@ class Ableton {
     /**
         Constructs a osc message and sends it to the given ableton live path
      */
-    set(path, value) {
-        if (value === undefined) {
+    set() {
+        // converts arguments into a list
+        const args = [].slice.call(arguments)
+        // extracts the path from the arguments
+        const path = args.shift()
+        //console.log(arguments)
+        /*if (value === undefined) {
             console.warn('Ableton.set called without a valid value', path)
             return;
-        }
+        }*/
 
-        console.log('setting ableton live ', path, value)
+        console.log('setting ableton live -->', path, ...args)
 
-        const message = new OSC.Message(this.prefix + path, value)
+        const message = new OSC.Message(this.prefix + path, ...args)
         const { host, port } = this.remote
 
         this.osc.send(message, { host, port })
