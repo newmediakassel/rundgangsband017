@@ -1,14 +1,9 @@
 <template>
-  <div id="app">
-    <p v-if="isConnected">We're connected to the server!</p>
-
-    <p>Message from server: "{{socketMessage}}"</p>
-
-    <input type="number" v-model="slot1" v-on:blur="pingServer()" placeholder="track">
-    <input type="number" v-model="slot2" v-on:blur="pingServer()" placeholder="slot">
-    
-    <button @click="pingServer()">Ping Server</button>
-  </div>
+    <ul id="repeat-object" class="sequencer">
+        <li v-for="(item, index) in sequence" v-bind:class="{ active: item.value }" @click="toogleSequence(index)">
+            <span></span>
+        </li>
+    </ul>
 </template>
 
 <script>
@@ -16,8 +11,18 @@ export default {
     data: () => ({
         isConnected: false,
         socketMessage: '',
-        slot1: 0,
-        slot2: 0
+        //sequence: [0,0,0,0],
+        sequence: [
+            { value: false },
+            { value: false },
+            { value: false },
+            { value: false },
+
+            { value: false },
+            { value: false },
+            { value: false },
+            { value: false }
+        ]
     }),
 
     sockets: {
@@ -41,6 +46,25 @@ export default {
             // Send the "pingServer" event to the server.
             console.log(this.slot1, this.slot2)
             this.$socket.emit('pingServer', [this.slot1, this.slot2])
+        },
+
+        toogleSequence(index) {
+            // swap value
+            this.sequence[index].value = !this.sequence[index].value
+
+            const values = this.sequence.map((el) => el.value)
+            console.log('sending sequence', values)
+
+            this.$socket.emit('update_sequence', values);
+        },
+
+        isActive(index) {
+            if (this.sequence[index]) {
+                return true;
+            }
+            else {
+                return false;
+            }
         }
     }
 }
@@ -48,16 +72,38 @@ export default {
 
 
 <style>
-    #app {
-      font-family: 'Avenir', Helvetica, Arial, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-align: center;
-      color: #2c3e50;
-      margin-top: 60px;
+    html,
+    body {
+        height: 100%;
+        background: pink;
+        padding: 0;
+        margin: 0;
     }
 
-    h1, h2 {
-      font-weight: normal;
+    .sequencer {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+
+    }
+
+    .sequencer li {
+        display: inline-block;
+        width: 25%;
+        height: 25%;
+        padding: 0 5px 5px;
+        box-sizing: border-box;
+    }
+
+    .sequencer li span {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: red;
+    }
+
+    .sequencer li.active span {
+        background: #000;
     }
 </style>

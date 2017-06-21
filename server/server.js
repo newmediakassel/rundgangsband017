@@ -6,6 +6,8 @@ import { Ableton } from './backend'
 
 const ableton = new Ableton()
 
+import { SequencerMatrix } from './matrixes/sequencer'
+
 /*const onCrossfadeChange = (msg) => {
     console.log(msg.args)
 }*/
@@ -36,6 +38,25 @@ io.on('connection', (socket) => {
         ableton.set('clip/play', parseInt(data[0]) || 0, parseInt(data[1]) || 0)
         //counter++
         //socket.emit('news', 'bar' + counter)
+    })
+
+    socket.on('update_sequence', (sequence) => {
+        let arrays = []
+        const size = 4;
+
+        while (sequence.length > 0) {
+            arrays.push(sequence.splice(0, size));
+        }
+
+        console.log(arrays)
+
+        arrays.forEach((arr, index) => {
+            const foo = SequencerMatrix.get(arr, index)
+
+            console.log('index', index, foo)
+
+            ableton.set('clip/play', foo[0], foo[1])
+        })
     })
 })
 
