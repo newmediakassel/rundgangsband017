@@ -1,18 +1,51 @@
 <template>
-    <ul id="repeat-object" class="sequencer">
-        <li v-for="(item, index) in sequence" v-bind:class="{ active: item.value }" @click="toogleSequence(index)">
-            <span></span>
-        </li>
-    </ul>
+    <div>
+        <ul id="repeat-object" class="sequencer">
+            <li v-for="(item, index) in sequence" v-bind:class="{ active: item.value }" @click="toogleSequence(index)">
+                <span></span>
+            </li>
+        </ul>
+
+        <div class="overlay">
+            <select v-model="offset">
+                <option value="0" default>Kick</option>
+                <option value="5">Snare</option>
+            </select>
+        </div>
+    </div>
 </template>
 
 <script>
+const buildSequence = function (size, values = []) {
+    let sec = []
+
+    if (values.length < size) {
+        console.log('foo')
+        while (values.length < size) {
+            values.push(false)
+        }
+    }
+
+    console.log(values)
+
+    values.forEach(value => {
+        sec.push({ value })
+    });
+
+    console.log(sec)
+
+    return sec
+}
+
+const SLOTS = 16
+
 export default {
     data: () => ({
         isConnected: false,
         socketMessage: '',
         //sequence: [0,0,0,0],
-        sequence: [
+        offset: 0,
+        sequence: buildSequence(SLOTS)/*[
             { value: false },
             { value: false },
             { value: false },
@@ -22,7 +55,7 @@ export default {
             { value: false },
             { value: false },
             { value: false }
-        ]
+        ]*/
     }),
 
     sockets: {
@@ -38,6 +71,11 @@ export default {
         // Fired when the server sends something on the "messageChannel" channel.
         news(data) {
             this.socketMessage = data
+        },
+
+        updateSequence(sequence) {
+            this.sequence = buildSequence(SLOTS, sequence)
+            console.log(this.getValues(), sequence)
         }
     },
 
@@ -48,14 +86,18 @@ export default {
             this.$socket.emit('pingServer', [this.slot1, this.slot2])
         },
 
+        getValues() {
+            return this.sequence.map((el) => el.value)
+        },
+
         toogleSequence(index) {
             // swap value
             this.sequence[index].value = !this.sequence[index].value
 
-            const values = this.sequence.map((el) => el.value)
+            const values = this.getValues()
             console.log('sending sequence', values)
 
-            this.$socket.emit('update_sequence', values);
+            this.$socket.emit('updateSequence', values, this.offset);
         },
 
         isActive(index) {
@@ -66,6 +108,13 @@ export default {
                 return false;
             }
         }
+    },
+
+    watch: {
+        offset: function (val) {
+            console.log('sending val', val)
+            this.$socket.emit('instrumentOffset', val);
+        }
     }
 }
 </script>
@@ -75,9 +124,13 @@ export default {
     html,
     body {
         height: 100%;
-        background: pink;
+        background: black;
         padding: 0;
         margin: 0;
+    }
+
+    body > div {
+        height: 100%;
     }
 
     .sequencer {
@@ -100,10 +153,22 @@ export default {
         display: block;
         width: 100%;
         height: 100%;
-        background: red;
+        background: rgba(255,0,0,.3);
+        cursor: pointer;
+    }
+
+    .sequencer li span:hover {
+        background: rgba(255,0,0,.6);
     }
 
     .sequencer li.active span {
-        background: #000;
+        background: red;
+    }
+
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-color: #000;
     }
 </style>

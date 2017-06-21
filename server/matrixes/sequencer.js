@@ -10,13 +10,14 @@ export const SequencerMatrix = {
         '1100': 5,
         '1010': 6,
         '1001': 7,
-        '0101': 8,
-        '0011': 9,
-        '1110': 10,
-        '1101': 11,
-        '1011': 12,
-        '0111': 13,
-        '1111': 14,
+        '0110': 8,
+        '0101': 9,
+        '0011': 10,
+        '1110': 11,
+        '1101': 12,
+        '1011': 13,
+        '0111': 14,
+        '1111': 15
     },
 
     isGrouped: true,
@@ -30,7 +31,8 @@ export const SequencerMatrix = {
         console.log('converted sequence', sequence, key)
 
         if (this.values[key] === undefined) {
-            return
+            console.log('KEY', key, 'doesn\'t exits.sgldök.')
+            return [-1, -1]
         }
 
         const slot = this.values[key];

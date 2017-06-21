@@ -29,9 +29,28 @@ const io = require('socket.io')(app)
 const fs = require('fs')
 
 let counter = 0
+//let instrumentIndexOffset = 0
+
+const store = {
+    values: {},
+    get: function (key) {
+        return this.values[key] ? this.values[key] : []
+    },
+    set: function (key, value) {
+        console.log('updating store', key, value)
+        this.values[key] = value
+    }
+}
 
 io.on('connection', (socket) => {
+    const skey = (offset) => `sequence-${offset}`
+
     socket.emit('news', { hello: 'world' })
+    const sequence = store.get('sequence');
+    if (sequence) {
+        console.log('emitting sequence', store.get(skey()))
+        socket.emit('updateSequence', store.get(skey()))
+    }
 
     socket.on('pingServer', (data)  => {
         console.log('got data from the interface', data)
@@ -40,18 +59,32 @@ io.on('connection', (socket) => {
         //socket.emit('news', 'bar' + counter)
     })
 
-    socket.on('update_sequence', (sequence) => {
+    /*socket.on('instrumentOffset', (offset) => {
+        console.log('got offset', offset)
+        instrumentIndexOffset = parseInt(offset)
+
+        socket.emit('updateSequence', store.get(skey()))
+    })*/
+
+    socket.on('updateSequence', (sequence, offset) => {
         let arrays = []
         const size = 4;
+        const mySequence = sequence.slice()
+
+        offset = parseInt(offset)
+
+        store.set(skey(offset), mySequence)
+        //console.log(store.values)
+        //socket.broadcast.emit('updateSequence', mySequence)
 
         while (sequence.length > 0) {
             arrays.push(sequence.splice(0, size));
         }
 
-        console.log(arrays)
+        //console.log(arrays)
 
         arrays.forEach((arr, index) => {
-            const foo = SequencerMatrix.get(arr, index)
+            const foo = SequencerMatrix.get(arr, index + offset)
 
             console.log('index', index, foo)
 
