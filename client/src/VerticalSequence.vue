@@ -43,7 +43,6 @@ export default {
     methods: {
         onClick() {
             this.$store.dispatch('setVerticalSlot', this.index)
-            console.log(this.$store.getters.sequencerValues)
             this.$socket.emit(
                 'updateSequence',
                 this.$store.getters.currentInstrumentName,

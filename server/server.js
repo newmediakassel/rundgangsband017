@@ -101,7 +101,13 @@ const setSocketInstrument = (socket, instrument, index) => {
     }
 
     socket.emit('setCurrentInstrument', { index, name: instrument })
-    socket.emit('updateSequence', instrumentStore.get(instrument))
+    socket.emit(getUpdateName(socket), instrumentStore.get(instrument))
+}
+
+const getUpdateName = (socket) => {
+    const component = instruments[socket.instrument.index].component
+
+    return `update${component}`
 }
 
 io.on('connection', (socket) => {
@@ -136,7 +142,7 @@ io.on('connection', (socket) => {
 
         //TODO check socket.in(instrument).broadcast()
         const component = instruments[socket.instrument.index].component
-        io.sockets.in(instrument).emit(`update${component}`, instrumentStore.get(instrument))
+        io.sockets.in(instrument).emit(getUpdateName(socket), instrumentStore.get(instrument))
 
         while (sequence.length > 0) {
             arrays.push(sequence.splice(0, size))

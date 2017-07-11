@@ -54,13 +54,13 @@ const actions = {
     },
 
     socket_updateLinearSequence({ commit, state }, values) {
+        console.log('got linear sequence from store', values)
 
         values.forEach((value, index) => {
             if (state.slots[index].value === value) {
                 return
             }
 
-            console.log('types.SEQUENCE_UPDATE', index)
             commit(types.SEQUENCE_UPDATE, {
                 index,
                 value
@@ -99,8 +99,6 @@ const actions = {
         commit(types.TRANSFORM_SEQUENCE_VALUES, (el, i, s) => {
             const x = i % sqrt
             const y = Math.floor(i / sqrt)
-
-            console.log(el, el.value, s)
 
             const newIndex = x * sqrt + y
 
