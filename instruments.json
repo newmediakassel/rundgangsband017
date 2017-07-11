@@ -1,5 +1,17 @@
 [
     {
+        "offset": 0,
+        "name": "kick",
+        "component": "LinearSequence",
+        "matrix": "LinearSequenceMatrix"
+    },
+    {
+        "offset": 5,
+        "name": "snare",
+        "component": "LinearSequence",
+        "matrix": "LinearSequenceMatrix"
+    },
+    {
         "offset": 10,
         "name": "hat",
         "component": "VerticalSequence",
