@@ -6,8 +6,6 @@
 </template>
 
 <script>
-import move from 'move-js'
-
 export default {
     props: {
         index: Number,
