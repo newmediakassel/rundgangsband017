@@ -2,19 +2,29 @@
     {
         "offset": 0,
         "name": "kick",
+        "isSequencer": true,
         "component": "LinearSequence",
         "matrix": "LinearSequenceMatrix"
     },
     {
         "offset": 5,
         "name": "snare",
+        "isSequencer": true,
         "component": "LinearSequence",
         "matrix": "LinearSequenceMatrix"
     },
     {
         "offset": 10,
         "name": "hat",
+        "isSequencer": true,
         "component": "VerticalSequence",
         "matrix": "LinearSequenceMatrix"
+    },
+
+    {
+        "offset": 15,
+        "name": "filter",
+        "component": "1DFilter",
+        "matrix": ""
     }
 ]

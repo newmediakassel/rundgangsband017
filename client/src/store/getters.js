@@ -14,6 +14,10 @@ export const currentInstrumentOffset = (state, getters) => {
     return getters.currentInstrument.offset
 }
 
+export const currentInstrumentIsSequencer = (state, getters) => {
+    return getters.currentInstrument.isSequence
+}
+
 export const currentInstrumentName = (state, getters) => {
     return getters.currentInstrument.name
 }

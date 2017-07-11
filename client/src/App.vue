@@ -1,9 +1,13 @@
 <template>
     <div>
         <Sequencer
+            v-if="isSequencer"
             v-bind:childName="childName"
             v-bind:offset="offset"
             v-bind:slots="sequencerSlots" />
+        <component v-else
+            v-bind:is="childName"
+            v-bind:offset="offset" />
     </div>
 </template>
 
@@ -11,6 +15,7 @@
 import { mapGetters } from 'vuex'
 
 import Sequencer from './Sequencer.vue'
+import OneDFilter from './1DFilter.vue'
 
 export default {
     data: () => ({
@@ -19,13 +24,15 @@ export default {
     }),
 
     components: {
-        Sequencer
+        Sequencer,
+        OneDFilter
     },
 
     computed: {
         ...mapGetters({
             childName: 'currentInstrumentComponent',
             offset: 'currentInstrumentOffset',
+            isSequencer: 'currentInstrumentIsSequencer',
             connected: 'isConnected'
         }),
     },
