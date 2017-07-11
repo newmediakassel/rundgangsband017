@@ -1,3 +1,4 @@
+import store from 'redis-js'
 
 import IndexHandler from './handlers/index'
 
@@ -6,8 +7,14 @@ import { Ableton } from './backend'
 
 const ableton = new Ableton()
 
-import { SequencerMatrix } from './matrixes/sequencer'
+import instruments from '../instruments.json'
 
+import { LinearSequenceMatrix } from './matrixes/sequencer'
+
+
+const matrixes = {
+    LinearSequenceMatrix,
+}
 /*const onCrossfadeChange = (msg) => {
     console.log(msg.args)
 }*/
@@ -28,123 +35,117 @@ const app = require('http').createServer(indexHandler)
 const io = require('socket.io')(app)
 const fs = require('fs')
 
-let counter = 0
 //let instrumentIndexOffset = 0
 
-const store = {
+const instrumentStore = {
     values: {},
     get: function (key) {
+        if (!this.values[key]) {
+            console.warn('key not found', key, this.values)
+        }
+
         return this.values[key] ? this.values[key] : []
     },
     set: function (key, value) {
-        console.log('updating store', key, value)
         this.values[key] = value
     }
 }
 
-const loopJump = function () {
-    //const ACTIVE_LOOPS = 8
-    let counter = 1
-    let lastLoopJump_timestamp = null
-
-    console.log('subscribing to loopjump')
-    ableton.subscribeTo('/live/clip/loopjump', (val) => {
-        if (val.args[0] == 1 && val.args[1] == 1) {
-            console.log('alternative loopjump', lastLoopJump_timestamp)
-            const now = Date.now()
-
-            // exit on first run
-            if (!lastLoopJump_timestamp) {
-                lastLoopJump_timestamp = now
-                return
-            }
-
-            const duration = now - lastLoopJump_timestamp
-            const sequencers = [0, 5];
-
-            sequencers.forEach((room) => {
-                io.sockets.in(room).emit('loopjump', duration)
-            })
-
-            lastLoopJump_timestamp = now
-        }
-
-        /*
-        counter++
-
-        if (counter % ACTIVE_LOOPS == 0) {
-            console.log('got loopjump')
-        }*/
+const tempo = function () {
+    console.log('subscribing to tempo')
+    const tempoSubscription = ableton.subscribeTo('tempo', (tempo) => {
+        store.set('tempo', parseFloat(tempo, 10))
     })
 }()
 
-io.on('connection', (socket) => {
-    const skey = (offset) => `sequence-${offset}`
+//let counter = 0
+const loopJump = function () {
+    //const ACTIVE_LOOPS = 8
+    //let counter = 1
+    let lastLoopJump_timestamp = null
 
-    socket.emit('news', { hello: 'world' })
-    /*const sequence = store.get(skey());
-    if (sequence) {
-        console.log('emitting sequence', store.get(skey()))
-        socket.emit('updateSequence', store.get(skey()))
-    }*/
+    console.log('subscribing to loopjump')
+    ableton.subscribeTo('clip/loopjump', (val) => {
+        const now = Date.now()
+        const t = Math.floor(now / 1000)
 
-    socket.on('create', (room) => {
-        const rooms = Object.keys(socket.rooms)
-        console.log(rooms)
+        const tempo = parseFloat(store.get('tempo'), 10)
 
-        rooms.forEach((room) => {
-            if (room != socket.id) {
-                console.log('leaving room', room)
-                socket.leave(room)
-            }
+        if (t == lastLoopJump_timestamp) {
+            return
+        }
+
+        io.sockets.emit('loopjump', {
+            bpm: tempo,
+            timestamp: now
         })
 
-        console.log('joining room', room)
-        socket.join(room)
-        io.sockets.in(room).emit('updateSequence', store.get(skey(room)))
+        lastLoopJump_timestamp = t
+    })
+}()
+
+const setSocketInstrument = (socket, instrument, index) => {
+    const rooms = Object.keys(socket.rooms)
+
+    rooms.forEach((room) => {
+        if (room != socket.id) {
+            console.log('leaving instrument', room)
+            socket.leave(room)
+        }
+    })
+
+    socket.join(instrument)
+    socket.instrument = {
+        name: instrument,
+        index
+    }
+
+    socket.emit('setCurrentInstrument', { index, name: instrument })
+    socket.emit('updateSequence', instrumentStore.get(instrument))
+}
+
+io.on('connection', (socket) => {
+    let instrumentName = ''
+
+    const setInstrumentName = (room) => {
+        instrumentName = `instrument-${room}`
+
+        return instrumentName
+    }
+
+    socket.on('requestInstrument', () => {
+        // TODO do some magic here to properly select the instrument
+        console.log(instruments)
+        //const instruments = instruments.length
+        const instrumentIndex = Math.floor(Math.random() * instruments.length)
+
+        setSocketInstrument(socket, setInstrumentName(instrumentIndex), instrumentIndex)
     })
 
     socket.on('pingServer', (data)  => {
         console.log('got data from the interface', data)
-        ableton.set('clip/play', parseInt(data[0]) || 0, parseInt(data[1]) || 0)
-        //counter++
-        //socket.emit('news', 'bar' + counter)
+        //ableton.set('clip/play', parseInt(data[0]) || 0, parseInt(data[1]) || 0)
     })
 
-    /*socket.on('instrumentOffset', (offset) => {
-        console.log('got offset', offset)
-        console.log('sending sequence', store.get(skey(offset)))
-        socket.emit('updateSequence', store.get(skey(offset)))
-    })*/
-
-    /*socket.on('instrumentOffset', (offset) => {
-        console.log('got offset', offset)
-        instrumentIndexOffset = parseInt(offset)
-
-        socket.emit('updateSequence', store.get(skey()))
-    })*/
-
-    socket.on('updateSequence', (sequence, offset) => {
+    socket.on('updateSequence', (instrument, sequence, offset) => {
         let arrays = []
-        const size = 4;
-        const mySequence = sequence.slice()
+        const size = 4
 
-        offset = parseInt(offset)
+        instrumentStore.set(instrument, [...sequence]) // <-- IMPORTANT TO COPY. REFERENCE WILL BE DELETED OTHERWISE
+        console.log('socket.instrument', socket.instrument)
 
-        store.set(skey(offset), mySequence)
-        //console.log(store.values)
-
-        io.sockets.in(offset).emit('updateSequence', mySequence)
-        //socket.broadcast.to('instrument-' + offset).emit('updateSequence', mySequence)
+        //TODO check socket.in(instrument).broadcast()
+        const component = instruments[socket.instrument.index].component
+        io.sockets.in(instrument).emit(`update${component}`, instrumentStore.get(instrument))
 
         while (sequence.length > 0) {
-            arrays.push(sequence.splice(0, size));
+            arrays.push(sequence.splice(0, size))
         }
 
-        //console.log(arrays)
-
         arrays.forEach((arr, index) => {
-            const foo = SequencerMatrix.get(arr, index + offset)
+            const matrix = instruments[socket.instrument.index].matrix
+            console.log('matrix', matrix)
+            const foo = matrixes[matrix].get(arr, index + offset)
 
             console.log('index', index, foo)
 

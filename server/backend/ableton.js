@@ -47,7 +47,11 @@ class Ableton {
     fooSubscription.end()
     */
     subscribeTo(path, callback) {
-        this.osc.on(path, callback)
+        const cb = (msg) => {
+            callback.call(msg, ...msg.args)
+        }
+
+        this.osc.on(this.prefix + path, cb)
 
         // send a get message to the remote to make sure you're always getting
         // a reponse with the current state as soon as you subscribe to a channel.
@@ -58,8 +62,8 @@ class Ableton {
 
         this.osc.send(message, { host, port })
 
-        // return the unsubscribe function right away
-        return { end: () => { this.osc.off(path, callback) } }
+        // TODO return the unsubscribe function right away
+        return { end: () => { /*this.osc.off(path, cb)*/ console.warn('implement me') } }
     }
 }
 

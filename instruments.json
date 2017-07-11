@@ -1,0 +1,8 @@
+[
+    {
+        "offset": 10,
+        "name": "hat",
+        "component": "VerticalSequence",
+        "matrix": "LinearSequenceMatrix"
+    }
+]

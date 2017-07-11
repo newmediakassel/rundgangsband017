@@ -1,6 +1,6 @@
 //is in group = index + 1
 
-export const SequencerMatrix = {
+export const LinearSequenceMatrix = {
     values: {
         '0000': 0,
         '1000': 1,
